@@ -5,15 +5,12 @@ This module defines the core classes used for modeling bolts, washers, members,
 and complete bolted joint assemblies with their associated properties and methods.
 """
 
-import pint  # for unit handling
 from typing import Optional
 from resources import bolt_sizes, materials, clearance_holes
 
 BOLT_SIZES = bolt_sizes()
 MATERIALS = materials()
 CLEARANCE_HOLES = clearance_holes()
-
-u = pint.UnitRegistry()
 
 class Bolt:
     """
@@ -40,7 +37,6 @@ class Bolt:
         Raises:
             ValueError: If TPI is not available for the specified bolt size
         """
-    def __init__(self, size, tpi, material):
         tpi_key = str(tpi)  # normalize to string for dict key
 
         # Optional: validate early for clearer error messages
@@ -81,7 +77,6 @@ class Washer:
             t (float): Thickness in inches
             material (str): Material designation, defaults to "carbon steel"
         """ 
-    def __init__(self, di, do, t, material="carbon steel"):
         self.di = di
         self.do = do
         self.t = t

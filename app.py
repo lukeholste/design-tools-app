@@ -23,7 +23,7 @@ def create_bolt_instance():
         bolt_instance = create_bolt(bolt, tpi, material)
         st.session_state.bolt_instance = bolt_instance
     except ValueError as e:
-        st.error(str(e))
+        st.error(f"Error creating bolt: {str(e)}")
         st.session_state.bolt_instance = None
 
 def update_material_properties(df):
@@ -50,21 +50,23 @@ def rows_to_members(df):
 def create_joint(bolt, members, washers=None, clearance='Normal'):
     if bolt and len(members) > 1:
         try:
-            st.session_state.joint_instance = BoltedJoint(bolt=bolt, members=members, clearance_hole=CLEARANCE_HOLES[bolt][clearance.lower()],  washers=washers, preload=0)
+            st.session_state.joint_instance = BoltedJoint(bolt=bolt, members=members, 
+                                                          clearance_hole=CLEARANCE_HOLES[bolt.size.strip('"')][clearance.lower()],  
+                                                          washers=washers, preload=0)
         except Exception as e:
             st.error(f"Error creating BoltedJoint: {e}")
-            print(e)
     else:
         st.session_state.joint_instance = None
 
 # ======== Streamlit App ========
 st.set_page_config(page_title="Bolted Joint Analyzer", layout="wide")
 st.title("Bolted Joint Analyzer")
-st.subheader("Fastener Parameters")
 
-col1, col2 = st.columns([1, 2])
+col1, col2 = st.columns([2, 1])
 
 with col1:
+    st.subheader("Fastener Parameters")
+
     joint_type = st.selectbox('Bolt Type', options=['Tapped Hole', 'Bolted Joint'], key='joint_type', index=1)
     bolt = st.selectbox('Bolt Size', options=BOLT_SIZES, index=0, placeholder='Select bolt size', on_change=create_bolt_instance)
 
@@ -73,7 +75,7 @@ with col1:
         if clearance == 'Custom':
             st.number_input(label='Hole Dia. [in]', min_value = BOLT_SIZES[bolt]['d'])
         else:
-            st.write(f"Hole Diameter: {CLEARANCE_HOLES[bolt][clearance.lower()]:.3f} in")
+            st.write(f"Hole Diameter: {CLEARANCE_HOLES[bolt.strip("\"")][clearance.lower()]:.3f} in")
 
     tpi = st.selectbox('TPI', options=BOLT_SIZES[bolt]['tpi'], index=0, placeholder='Select TPI', on_change=create_bolt_instance)
     material = st.selectbox('Bolt Material', options=list(MATERIALS.keys()), index=0, placeholder='Select material', on_change=create_bolt_instance)
@@ -107,7 +109,7 @@ with col1:
     df[editable_cols] = edited_df
     updated_df = update_material_properties(df)
 
-    st.dataframe(updated_df, width='stretch', hide_index=True)
+    st.dataframe(updated_df, hide_index=True)
 
     st.button('Create Joint', on_click=create_joint, args=(st.session_state.get('bolt_instance'), rows_to_members(updated_df), None))
     if 'bolt_instance' in st.session_state and st.session_state.bolt_instance:
@@ -115,13 +117,14 @@ with col1:
     
     if 'joint_instance' in st.session_state and st.session_state.joint_instance:
         st.write(st.session_state.joint_instance.__repr__() if 'joint_instance' in st.session_state and st.session_state.joint_instance else "No joint created yet.")
-
+    st.write(f"Clearance Hole: {CLEARANCE_HOLES[bolt.strip('\"')][clearance.lower()] if clearance != 'Custom' else 'Custom'} in")
+    st.write(f"Bolt Diameter: {BOLT_SIZES[bolt]['d']} in")
 with col2:
     st.subheader("Bolt Visualization")
     if 'joint_instance' in st.session_state and st.session_state.joint_instance:
         fig, ax = plot_bolted_joint(
             st.session_state.joint_instance
         )
-        st.pyplot(fig, width='stretch')
+        st.pyplot(fig)
     else:
         st.info("Create a bolt and joint to see the visualization.")
