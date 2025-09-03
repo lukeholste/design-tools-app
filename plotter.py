@@ -5,16 +5,27 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
+# Constants for visualization
+BOLT_HEAD_HEIGHT_RATIO = 0.5  # Bolt head height as ratio of diameter
+BOLT_HEAD_WIDTH_RATIO = 2.0   # Bolt head width as ratio of diameter
+MEMBER_WIDTH_RATIO = 10.0     # Member width as ratio of thickness  
+NUT_SIZE_RATIO = 1.5          # Nut size as ratio of bolt diameter
+FIGURE_SIZE = (2, 2)          # Default figure size
+BOLT_MARGIN_RATIO = 2.0       # Margin around bolt as ratio of diameter
+
 # Function to plot a bolt
-def plot_bolt(ax, bolt_length, bolt_diameter, ):
+def plot_bolt(ax, bolt_length, bolt_diameter):
     """Plot a simple representation of a bolt."""
     # Draw bolt shaft
-    shaft = patches.Rectangle((-bolt_diameter/2, 0), bolt_diameter, bolt_length, color='gray', edgecolor='black')
+    shaft = patches.Rectangle((-bolt_diameter/2, 0), bolt_diameter, bolt_length, 
+                            color='gray', edgecolor='black')
     ax.add_patch(shaft)
     
     # Draw bolt head
-    head_height = bolt_diameter * 0.5
-    head = patches.Rectangle((-bolt_diameter, bolt_length), bolt_diameter*2, head_height, color='darkgray', edgecolor='black')
+    head_height = bolt_diameter * BOLT_HEAD_HEIGHT_RATIO
+    head_width = bolt_diameter * BOLT_HEAD_WIDTH_RATIO
+    head = patches.Rectangle((-head_width/2, bolt_length), head_width, head_height, 
+                           color='darkgray', edgecolor='black')
     ax.add_patch(head)
     
     # return y axis position for stacking
@@ -43,7 +54,10 @@ def plot_members(ax, members, start_position, clearance_hole):
     """Plot members as stacked rectangles."""
     current_position = start_position
     for member in members:
-        member_rect = patches.Rectangle((-member.thickness*5, current_position), member.thickness*10, member.thickness, color='sandybrown')
+        member_width = member.thickness * MEMBER_WIDTH_RATIO
+        member_rect = patches.Rectangle((-member_width/2, current_position), 
+                                      member_width, member.thickness, 
+                                      color='sandybrown', edgecolor='black')
         ax.add_patch(member_rect)
         current_position -= member.thickness
     return current_position, ax
@@ -52,34 +66,42 @@ def plot_members(ax, members, start_position, clearance_hole):
 def plot_nut(ax, nut_size, position):
     """Plot a simple representation of a nut."""
     # Draw nut as a hexagon
-    hexagon = patches.RegularPolygon((0, position), numVertices=6, radius=nut_size/2, orientation=np.pi/6, color='darkgoldenrod')
+    hexagon = patches.RegularPolygon((0, position), numVertices=6, radius=nut_size/2, 
+                                   orientation=np.pi/6, color='darkgoldenrod', 
+                                   edgecolor='black')
     ax.add_patch(hexagon)
     
     return ax
 
-# Main function to plot the entire bolted joint
 def plot_bolted_joint(joint):
-
-    fig, ax = plt.subplots(figsize=(2, 2))
+    """Main function to plot the entire bolted joint."""
+    fig, ax = plt.subplots(figsize=FIGURE_SIZE)
     ax.set_aspect('equal')
-    ax.set_xlim(-joint.bolt.d*2,joint.bolt.d*2)    
-    ax.set_ylim(-joint.bolt.d,joint.grip_length()+joint.bolt.d*2)
+    
+    bolt_diameter = joint.bolt.d
+    grip_length = joint.grip_length()
+    
+    # Set plot limits with proper margins
+    margin = bolt_diameter * BOLT_MARGIN_RATIO
+    ax.set_xlim(-margin, margin)    
+    ax.set_ylim(-bolt_diameter, grip_length + bolt_diameter * BOLT_MARGIN_RATIO)
+    
     # Plot bolt
-    bolt_length = joint.grip_length() + joint.bolt.d  # Extra length for head and some margin
-    y, ax = plot_bolt(ax, bolt_length, joint.bolt.d)
+    bolt_length = grip_length + bolt_diameter  # Extra length for head and some margin
+    y, ax = plot_bolt(ax, bolt_length, bolt_diameter)
     
     # Plot members
     y, ax = plot_members(ax, joint.members, y, joint.clearance_hole)
     
     # Plot washer if present
-    washer_pos = y + sum(member.thickness for member in joint.members)
-    # if joint.washers:
-    #     for washer in joint.washers:
-    #         plot_washer(ax, washer.di, washer.do, washer.t, washer_pos)
-    #         washer_pos += washer.t
+    if joint.washers:
+        washer_pos = y + sum(member.thickness for member in joint.members)
+        for washer in joint.washers:
+            plot_washer(ax, washer.di, washer.do, washer.t, washer_pos)
+            washer_pos += washer.t
     
     # Plot nut
-    nut_size = joint.bolt.d * 1.5
+    nut_size = bolt_diameter * NUT_SIZE_RATIO
     plot_nut(ax, nut_size, washer_pos)
 
     plt.show()
