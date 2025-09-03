@@ -1,4 +1,9 @@
-# plotter.py
+"""
+Plotting module for visualizing bolted joints.
+
+This module provides functions to create matplotlib visualizations of bolted joints,
+including bolts, washers, members, and nuts.
+"""
 
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
@@ -6,7 +11,7 @@ import matplotlib.patches as patches
 import numpy as np
 
 # Function to plot a bolt
-def plot_bolt(ax, bolt_length, bolt_diameter, ):
+def plot_bolt(ax, bolt_length, bolt_diameter):
     """Plot a simple representation of a bolt."""
     # Draw bolt shaft
     shaft = patches.Rectangle((-bolt_diameter/2, 0), bolt_diameter, bolt_length, color='gray', edgecolor='black')
@@ -73,14 +78,13 @@ def plot_bolted_joint(joint):
     
     # Plot washer if present
     washer_pos = y + sum(member.thickness for member in joint.members)
-    # if joint.washers:
-    #     for washer in joint.washers:
-    #         plot_washer(ax, washer.di, washer.do, washer.t, washer_pos)
-    #         washer_pos += washer.t
+    if joint.washers:
+        for washer in joint.washers:
+            plot_washer(ax, washer.di, washer.do, washer.t, washer_pos)
+            washer_pos += washer.t
     
     # Plot nut
     nut_size = joint.bolt.d * 1.5
     plot_nut(ax, nut_size, washer_pos)
 
-    plt.show()
     return fig, ax
