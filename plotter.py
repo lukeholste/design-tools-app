@@ -18,14 +18,14 @@ def plot_bolt(ax, bolt_length, bolt_diameter):
     """Plot a simple representation of a bolt."""
     # Draw bolt shaft
     shaft = patches.Rectangle((-bolt_diameter/2, 0), bolt_diameter, bolt_length, 
-                            color='gray', edgecolor='black')
+                            facecolor='gray', edgecolor='black')
     ax.add_patch(shaft)
     
     # Draw bolt head
     head_height = bolt_diameter * BOLT_HEAD_HEIGHT_RATIO
     head_width = bolt_diameter * BOLT_HEAD_WIDTH_RATIO
     head = patches.Rectangle((-head_width/2, bolt_length), head_width, head_height, 
-                           color='darkgray', edgecolor='black')
+                           facecolor='darkgray', edgecolor='black')
     ax.add_patch(head)
     
     # return y axis position for stacking
@@ -57,7 +57,7 @@ def plot_members(ax, members, start_position, clearance_hole):
         member_width = member.thickness * MEMBER_WIDTH_RATIO
         member_rect = patches.Rectangle((-member_width/2, current_position), 
                                       member_width, member.thickness, 
-                                      color='sandybrown', edgecolor='black')
+                                      facecolor='sandybrown', edgecolor='black')
         ax.add_patch(member_rect)
         current_position -= member.thickness
     return current_position, ax
@@ -67,7 +67,7 @@ def plot_nut(ax, nut_size, position):
     """Plot a simple representation of a nut."""
     # Draw nut as a hexagon
     hexagon = patches.RegularPolygon((0, position), numVertices=6, radius=nut_size/2, 
-                                   orientation=np.pi/6, color='darkgoldenrod', 
+                                   orientation=np.pi/6, facecolor='darkgoldenrod', 
                                    edgecolor='black')
     ax.add_patch(hexagon)
     
@@ -93,9 +93,11 @@ def plot_bolted_joint(joint):
     # Plot members
     y, ax = plot_members(ax, joint.members, y, joint.clearance_hole)
     
+    # Calculate nut position
+    washer_pos = y + sum(member.thickness for member in joint.members)
+    
     # Plot washer if present
     if joint.washers:
-        washer_pos = y + sum(member.thickness for member in joint.members)
         for washer in joint.washers:
             plot_washer(ax, washer.di, washer.do, washer.t, washer_pos)
             washer_pos += washer.t
