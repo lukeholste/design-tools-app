@@ -1,13 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import json
 from classes import Bolt, Washer, Member, BoltedJoint
 from resources import bolt_sizes, materials, clearance_holes
 from plotter import plot_bolted_joint
-from threading import RLock
-
-_Lock = RLock()
 
 # ========= Load Data ========
 BOLT_SIZES = bolt_sizes()
@@ -111,7 +107,7 @@ with col1:
     df[editable_cols] = edited_df
     updated_df = update_material_properties(df)
 
-    st.dataframe(updated_df, use_container_width=True, hide_index=True)
+    st.dataframe(updated_df, width='stretch', hide_index=True)
 
     st.button('Create Joint', on_click=create_joint, args=(st.session_state.get('bolt_instance'), rows_to_members(updated_df), None))
     if 'bolt_instance' in st.session_state and st.session_state.bolt_instance:
@@ -123,10 +119,9 @@ with col1:
 with col2:
     st.subheader("Bolt Visualization")
     if 'joint_instance' in st.session_state and st.session_state.joint_instance:
-        with _Lock:
-            fig, ax = plot_bolted_joint(
-                st.session_state.joint_instance
-            )
-            st.pyplot(fig, use_container_width=True)
+        fig, ax = plot_bolted_joint(
+            st.session_state.joint_instance
+        )
+        st.pyplot(fig, width='stretch')
     else:
         st.info("Create a bolt and joint to see the visualization.")

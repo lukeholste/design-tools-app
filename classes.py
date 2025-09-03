@@ -1,4 +1,11 @@
-import pint # for unit handling
+"""
+Classes for representing bolted joint components and assemblies.
+
+This module defines the core classes used for modeling bolts, washers, members,
+and complete bolted joint assemblies with their associated properties and methods.
+"""
+
+import pint  # for unit handling
 from typing import Optional
 from resources import bolt_sizes, materials, clearance_holes
 
@@ -9,6 +16,30 @@ CLEARANCE_HOLES = clearance_holes()
 u = pint.UnitRegistry()
 
 class Bolt:
+    """
+    Represents a threaded bolt with size, thread pitch, and material properties.
+    
+    Attributes:
+        size (str): Bolt size designation (e.g., "#0", "#2", "1/4")
+        tpi (int): Threads per inch
+        material (str): Material designation
+        d (float): Nominal diameter in inches
+        A_t (float): Tensile stress area in square inches
+        A_m (float): Minor diameter area in square inches
+    """
+    
+    def __init__(self, size, tpi, material):
+        """
+        Initialize a Bolt instance.
+        
+        Args:
+            size (str): Bolt size designation
+            tpi (int or str): Threads per inch
+            material (str): Material designation
+            
+        Raises:
+            ValueError: If TPI is not available for the specified bolt size
+        """
     def __init__(self, size, tpi, material):
         tpi_key = str(tpi)  # normalize to string for dict key
 
@@ -29,7 +60,27 @@ class Bolt:
                 f"threads_per_inch={self.tpi}, tensile_stress_area={self.A_t}"
                 f"minor_diameter={self.A_m}, material={self.material})")
     
-class Washer: 
+class Washer:
+    """
+    Represents a washer with inner diameter, outer diameter, thickness, and material.
+    
+    Attributes:
+        di (float): Inner diameter in inches
+        do (float): Outer diameter in inches
+        t (float): Thickness in inches
+        material (str): Material designation
+    """
+    
+    def __init__(self, di, do, t, material="carbon steel"):
+        """
+        Initialize a Washer instance.
+        
+        Args:
+            di (float): Inner diameter in inches
+            do (float): Outer diameter in inches
+            t (float): Thickness in inches
+            material (str): Material designation, defaults to "carbon steel"
+        """ 
     def __init__(self, di, do, t, material="carbon steel"):
         self.di = di
         self.do = do
@@ -40,6 +91,17 @@ class Washer:
         return (f"Washer(inner_diameter={self.di}, outer_diameter={self.do}, thickness={self.t})")
 
 class Member:
+    """
+    Represents a structural member in a bolted joint.
+    
+    Each member has a unique ID, thickness, and material properties.
+    The ID counter ensures each member gets a unique identifier.
+    
+    Attributes:
+        id (int): Unique identifier for the member
+        thickness (float): Member thickness in inches
+        material (str): Material designation
+    """
     # ID Counter
     _id_counter = 0
 
@@ -89,4 +151,14 @@ class BoltedJoint:
 
     def bolt_stiffness(self):
         """Calculate the stiffness of the bolt from the grip and shank length."""
-
+        # For now, return a placeholder - this would need proper engineering calculation
+        # based on bolt material properties, diameter, and grip length
+        grip_length = self.grip_length()
+        bolt_E = MATERIALS[self.bolt.material]['E']  # Young's modulus in Pa
+        bolt_area = self.bolt.A_t  # Use tensile stress area
+        
+        # Basic stiffness calculation: k = A*E/L
+        if grip_length > 0:
+            return bolt_area * bolt_E / grip_length
+        else:
+            return 0
